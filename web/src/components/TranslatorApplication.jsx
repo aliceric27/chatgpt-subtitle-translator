@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useRef, useState } from 'react'
-import { Accordion, AccordionItem, Button, Input, Card, Textarea, Slider, Switch, CardHeader, CardBody, Divider } from "@nextui-org/react";
+import { Accordion, AccordionItem, Button, Input, Card, Select, SelectItem, Textarea, Slider, Switch, CardHeader, CardBody, Divider } from "@nextui-org/react";
 
 import { EyeSlashFilledIcon } from './EyeSlashFilledIcon';
 import { EyeFilledIcon } from './EyeFilledIcon';
@@ -18,9 +18,25 @@ import { CooldownContext } from 'chatgpt-subtitle-translator/src/cooldown.mjs';
 const OPENAI_API_KEY = "OPENAI_API_KEY"
 const OPENAI_BASE_URL = "OPENAI_BASE_URL"
 const RATE_LIMIT = "RATE_LIMIT"
+const LANGUAGE = [
+  {
+    label: "English", value: "English"
+  },
+  {
+    label: "繁體中文", value: "Traditional Chinese"
+  },
+  {
+    label: "简体中文", value: "Simplified Chinese"
+  },
+  {
+    label: "日本語", value: "Japanese"
+  }
 
-export function TranslatorApplication() {
+]
+export function TranslatorApplication()
+{
   // Translator Configuration
+
   const [APIvalue, setAPIValue] = useState("")
   const [baseUrlValue, setBaseUrlValue] = useState(undefined)
   const [fromLanguage, setFromLanguage] = useState("")
@@ -51,34 +67,41 @@ export function TranslatorApplication() {
   const [RPMInfomation, setRPMInformation] = useState(0)
 
   // Persistent Data Restoration
-  useEffect(() => {
+  useEffect(() =>
+  {
     setAPIValue(localStorage.getItem(OPENAI_API_KEY) ?? "")
     setRateLimit(Number(localStorage.getItem(RATE_LIMIT) ?? rateLimit))
     setBaseUrlValue(localStorage.getItem(OPENAI_BASE_URL) ?? undefined)
   }, [])
 
-  function setAPIKey(value) {
+  function setAPIKey(value)
+  {
     localStorage.setItem(OPENAI_API_KEY, value)
     setAPIValue(value)
   }
 
-  function setBaseUrl(value) {
-    if (!value) {
+  function setBaseUrl(value)
+  {
+    if (!value)
+    {
       value = undefined
       localStorage.removeItem(OPENAI_BASE_URL)
     }
-    if (value) {
+    if (value)
+    {
       localStorage.setItem(OPENAI_BASE_URL, value)
     }
     setBaseUrlValue(value)
   }
 
-  function setRateLimitValue(value) {
+  function setRateLimitValue(value)
+  {
     localStorage.setItem(RATE_LIMIT, value)
     setRateLimit(Number(value))
   }
 
-  async function generate(e) {
+  async function generate(e)
+  {
     e.preventDefault()
     setTranslatorRunningState(true)
     console.log("[User Interface]", "Begin Generation")
@@ -97,11 +120,13 @@ export function TranslatorApplication() {
     translatorRef.current = new Translator({ from: fromLanguage, to: toLanguage }, {
       openai,
       cooler: coolerChatGPTAPI,
-      onStreamChunk: (data) => {
+      onStreamChunk: (data) =>
+      {
         currentStream += data
         setStreamOutput(currentStream)
       },
-      onStreamEnd: () => {
+      onStreamEnd: () =>
+      {
         currentStream = ""
         setStreamOutput("")
       },
@@ -119,13 +144,17 @@ export function TranslatorApplication() {
       },
     })
 
-    if (systemInstruction) {
+    if (systemInstruction)
+    {
       translatorRef.current.systemInstruction = systemInstruction
     }
 
-    try {
-      for await (const output of translatorRef.current.translateLines(inputs)) {
-        if (!translatorRunningRef.current) {
+    try
+    {
+      for await (const output of translatorRef.current.translateLines(inputs))
+      {
+        if (!translatorRunningRef.current)
+        {
           console.error("[User Interface]", "Aborted")
           setStreamOutput("")
           break
@@ -139,7 +168,8 @@ export function TranslatorApplication() {
       }
       console.log({ sourceInputWorkingCopy: outputWorkingProgress })
       setSrtOutputText(parser.toSrt(outputWorkingProgress))
-    } catch (error) {
+    } catch (error)
+    {
       console.error(error)
       alert(error?.message ?? error)
     }
@@ -148,12 +178,21 @@ export function TranslatorApplication() {
     setTranslatorRunningState(false)
   }
 
-  async function stopGeneration() {
+  async function stopGeneration()
+  {
     console.error("[User Interface]", "Aborting")
-    if (translatorRef.current) {
+    if (translatorRef.current)
+    {
       translatorRunningRef.current = false
       translatorRef.current.abort()
     }
+  }
+  function switchLanguage()
+  {
+    const currentFromLanguage = fromLanguage;
+    setFromLanguage(toLanguage);
+    setToLanguage(currentFromLanguage);
+
   }
 
   return (
@@ -205,7 +244,7 @@ export function TranslatorApplication() {
                   </div>
 
                   <div className='flex w-full gap-4'>
-                    <Input
+                    {/* <Input
                       className='w-full md:w-6/12'
                       size='sm'
                       type="text"
@@ -214,8 +253,40 @@ export function TranslatorApplication() {
                       autoComplete='on'
                       value={fromLanguage}
                       onValueChange={setFromLanguage}
-                    />
-                    <Input
+                    /> */}
+                    <Select
+                      label="From Language"
+                      className="w-full md:w-6/12"
+                      placeholder="Auto"
+                      value={fromLanguage}
+                      items={LANGUAGE}
+                      onChange={(e) => setFromLanguage(e.target.value)}
+                    >
+                      {LANGUAGE.map((language) => (
+                        <SelectItem key={language.value} value={language.value}>
+                          {language.label}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                    <div className="flex items-center">
+                      <Button isDisabled={!fromLanguage} onClick={() => switchLanguage()}>
+                        ♻️Switch
+                      </Button>
+                    </div>
+                    <Select
+                      label="To Language"
+                      className="w-full md:w-6/12"
+                      placeholder="English"
+                      value={toLanguage}
+                      onChange={(e) => setToLanguage(e.target.value)}
+                    >
+                      {LANGUAGE.map((language) => (
+                        <SelectItem key={language.value} value={language.value}>
+                          {language.label}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                    {/* <Input
                       className='w-full md:w-6/12'
                       size='sm'
                       type="text"
@@ -223,7 +294,7 @@ export function TranslatorApplication() {
                       autoComplete='on'
                       value={toLanguage}
                       onValueChange={setToLanguage}
-                    />
+                    /> */}
                   </div>
 
                   <div className='w-full'>
@@ -297,14 +368,17 @@ export function TranslatorApplication() {
         </form>
 
         <div className='w-full justify-between md:justify-center flex flex-wrap gap-1 sm:gap-4 mt-auto sticky top-0 backdrop-blur px-4 pt-4'>
-          <FileUploadButton label={"Import SRT"} onFileSelect={async (file) => {
+          <FileUploadButton label={"Import SRT"} onFileSelect={async (file) =>
+          {
             // console.log("File", file);
-            try {
+            try
+            {
               const text = await file.text()
               const parsed = parser.fromSrt(text)
               setSrtInputText(text)
               setInputs(parsed.map(x => x.text))
-            } catch (error) {
+            } catch (error)
+            {
               alert(error.message ?? error)
             }
           }} />
@@ -320,7 +394,8 @@ export function TranslatorApplication() {
             </Button>
           )}
 
-          <Button color="primary" onClick={() => {
+          <Button color="primary" onClick={() =>
+          {
             // console.log(srtOutputText)
             downloadString(srtOutputText, "text/plain", "export.srt")
           }}>
@@ -333,7 +408,8 @@ export function TranslatorApplication() {
           <div className="lg:w-1/2">
             <SubtitleCard label={"Input"}>
               <ol className="py-2 list-decimal line-marker ">
-                {inputs.map((line, i) => {
+                {inputs.map((line, i) =>
+                {
                   return (
                     <li key={i} className=''>
                       <div className='ml-4 truncate'>
@@ -349,7 +425,8 @@ export function TranslatorApplication() {
           <div className="lg:w-1/2">
             <SubtitleCard label={"Output"}>
               <ol className="py-2 list-decimal line-marker ">
-                {outputs.map((line, i) => {
+                {outputs.map((line, i) =>
+                {
                   return (
                     <li key={i} className=''>
                       <div className='ml-4 truncate'>

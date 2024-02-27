@@ -258,7 +258,7 @@ export function TranslatorApplication()
                       label="From Language"
                       className="w-full md:w-6/12"
                       placeholder="Auto"
-                      value={fromLanguage}
+                      selectedKeys={fromLanguage ? [fromLanguage] : []}
                       items={LANGUAGE}
                       onChange={(e) => setFromLanguage(e.target.value)}
                     >
@@ -277,7 +277,7 @@ export function TranslatorApplication()
                       label="To Language"
                       className="w-full md:w-6/12"
                       placeholder="English"
-                      value={toLanguage}
+                      selectedKeys={[toLanguage]}
                       onChange={(e) => setToLanguage(e.target.value)}
                     >
                       {LANGUAGE.map((language) => (
